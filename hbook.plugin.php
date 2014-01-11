@@ -61,7 +61,7 @@ class Hbook extends Plugin
 
 	public function action_theme_loginform_controls()
 	{
-		Stack::add( 'admin_header_javascript', URL::get_from_filesystem(__FILE__) . '/facebook.js', 'facebook', array('jquery') );
+		Stack::add( 'admin_footer_javascript', URL::get_from_filesystem(__FILE__) . '/facebook.js', 'facebook', array('jquery') );
 
 		echo '<button data-fb-login="'. Options::get('hbook__fb_app_id') . '">Log in with Facebook</button>';
 	}
