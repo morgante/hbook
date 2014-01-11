@@ -17,19 +17,23 @@ class Hbook extends Plugin
 				'appId' => Options::get('hbook__fb_app_id'),
 				'secret' => Options::get('hbook__fb_app_secret'),
 				'cookie' => true,
-				'code' => $_REQUEST['code']
 			));
 
 			$this->add_rule('"auth"/"login"/"facebook"', 'login_facebook');
+
+			// Add jquery to the javascript stack:
+
+			Stack::add( 'admin_header_javascript', URL::get_from_filesystem(__FILE__) . '/facebook.js', 'facebook', array('jquery') );
+
 		}
 	}
 
 	public function action_plugin_act_login_facebook()
 	{
-		Utils::debug($_REQUEST);
-		Utils::debug($this->facebook->getAccessToken());
-		$this->facebook->setAccessToken($this->facebook->getAccessToken());
-		Utils::debug($this->facebook->api('/me'));
+		// Utils::debug($_REQUEST);
+		// Utils::debug($this->facebook->getAccessToken());
+		// $this->facebook->setAccessToken($this->facebook->getAccessToken());
+		// Utils::debug($this->facebook->api('/me'));
 		exit;
 	}
 
@@ -42,20 +46,12 @@ class Hbook extends Plugin
 		}
 	}
 
-	private function get_login_url()
-	{
-		$params = array(
-			// 'scope' => 'read_stream, friends_likes',
-			// 'redirect_uri' => URL::get('login_facebook')
-		);
-
-		return $this->facebook->getLoginUrl();
-	}
-
 	public function action_theme_loginform_controls()
 	{
-		echo '<a href="' . $this->get_login_url() . '">Log in with Facebook</a>';
-				Utils::debug($_REQUEST);
+		// echo '<button data-fb-login="'. Options::get('hbook__fb_app_id') . '">Log in with Facebook</button>';
+				// Utils::debug($_REQUEST);
+				// 
+		
 
 		Utils::debug($this->facebook->getUser());
 	}
