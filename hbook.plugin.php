@@ -6,6 +6,10 @@ if ( !defined( 'HABARI_PATH' ) ) {
 
 class Hbook extends Plugin
 {
+	/**
+	 * Build main plugin configuration form
+	 * @return void
+	 */
 	public function configure()
 	{
 		$ui = new FormUI( 'Hbook' );
@@ -16,6 +20,19 @@ class Hbook extends Plugin
 		$ui->append( 'submit', 'save', _t( 'Save' ) );
 		$ui->out();
 	}
+
+	/**
+     * Add the configuration to the user page 
+     **/
+    public function action_form_user( $form, $user )
+    {
+
+    	$form->user_info->append('text', 'facebook_id', $user, _t('Facebook User ID', 'hbook'), 'optionscontrol_text');
+    	$form->user_info->facebook_id->class[] = 'item';
+    	$form->user_info->facebook_id->class[] = 'clear';
+            
+    }
+    
 }
 
 ?>
