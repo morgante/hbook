@@ -21,8 +21,6 @@ class Hbook extends Plugin
 
 			$this->add_rule('"auth"/"login"/"facebook"', 'login_facebook');
 
-			Stack::add( 'admin_header_javascript', URL::get_from_filesystem(__FILE__) . '/facebook.js', 'facebook', array('jquery') );
-
 			$this->check_user();
 		}
 	}
@@ -38,8 +36,16 @@ class Hbook extends Plugin
 
 			$users = Users::get_by_info('facebook_id', $this->facebook->getUser());
 
-			if (count($users) > 0) {
-				$users[0]->remember();
+			if (isset($users[0])) {
+				$user = $users[0];
+
+				// Remember them
+				$user->remember();
+
+				// Store their token
+				$this->facebook->setExtendedAccessToken();
+				$user->info->hbook__facebook_token = $this->facebook->getAccessToken();
+				$user->update();
 			}
 		}
 	}
@@ -55,6 +61,8 @@ class Hbook extends Plugin
 
 	public function action_theme_loginform_controls()
 	{
+		Stack::add( 'admin_header_javascript', URL::get_from_filesystem(__FILE__) . '/facebook.js', 'facebook', array('jquery') );
+
 		echo '<button data-fb-login="'. Options::get('hbook__fb_app_id') . '">Log in with Facebook</button>';
 	}
 
