@@ -29,8 +29,6 @@
 			cookie: true,
 			xfbml: false
 		});
-
-		console.log('hi');
 	};
 
 	var load = function(d, s, id) {
@@ -44,7 +42,7 @@
 	var login = function() {
 		FB.login(function(response) {
 			if (response.authResponse) {
-				console.log(response);
+				window.location = '/admin';
 			} else {
 			// The person cancelled the login dialog
 			}

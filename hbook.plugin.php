@@ -21,20 +21,27 @@ class Hbook extends Plugin
 
 			$this->add_rule('"auth"/"login"/"facebook"', 'login_facebook');
 
-			// Add jquery to the javascript stack:
-
 			Stack::add( 'admin_header_javascript', URL::get_from_filesystem(__FILE__) . '/facebook.js', 'facebook', array('jquery') );
 
+			$this->check_user();
 		}
 	}
 
-	public function action_plugin_act_login_facebook()
+	public function check_user()
 	{
-		// Utils::debug($_REQUEST);
-		// Utils::debug($this->facebook->getAccessToken());
-		// $this->facebook->setAccessToken($this->facebook->getAccessToken());
-		// Utils::debug($this->facebook->api('/me'));
-		exit;
+		// No sense in trying if we're already logged in
+		if (User::identify()->loggedin) {
+			return;
+		}
+
+		if ($this->facebook->getUser()) {
+
+			$users = Users::get_by_info('facebook_id', $this->facebook->getUser());
+
+			if (count($users) > 0) {
+				$users[0]->remember();
+			}
+		}
 	}
 
 	private function is_ready()
@@ -48,12 +55,7 @@ class Hbook extends Plugin
 
 	public function action_theme_loginform_controls()
 	{
-		// echo '<button data-fb-login="'. Options::get('hbook__fb_app_id') . '">Log in with Facebook</button>';
-				// Utils::debug($_REQUEST);
-				// 
-		
-
-		Utils::debug($this->facebook->getUser());
+		echo '<button data-fb-login="'. Options::get('hbook__fb_app_id') . '">Log in with Facebook</button>';
 	}
 
 	/**
