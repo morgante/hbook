@@ -7,7 +7,7 @@
 	
 	<version>0.1</version>
 	<url>http://lab.morgante.net/hbook</url>
-	<description><![CDATA[Hbooks enables users to log in to Habari via Facebook.]]></description>
+	<description><![CDATA[Hbook allows users to log in to Habari via Facebook.]]></description>
 
 	<copyright>2013</copyright>
 </pluggable>
