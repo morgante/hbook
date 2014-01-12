@@ -16,6 +16,8 @@ class Hbook extends Plugin
 		if ($this->is_ready()) {
 			$this->add_rule('"auth"/"facebook"/"add"', 'add_facebook_user');
 			$this->add_rule('"auth"/"facebook"/"callback"', 'facebook_oauth_callback');
+
+			Stack::add( 'admin_header_javascript', URL::get_from_filesystem(__FILE__) . '/admin.js', 'hbook', array('jquery') );
 		}
 	}
 
@@ -166,9 +168,9 @@ class Hbook extends Plugin
 	{
 		$ui = new FormUI( 'Hbook' );
 
-		$ui->append('text', 'fb_app_id', 'option:hbook__fb_app_id')->label( _t('Facebook App ID', 'hbook') );
-		$ui->append('text', 'fb_app_secret', 'option:hbook__fb_app_secret')->label( _t('Facebook App Secret', 'hbook') );
-		$ui->append('text', 'fb_scopes', 'option:hbook__fb_scopes')->label( _t('Facebook Scopes', 'hbook') );
+		$ui->append('text', 'fb_app_id', 'option:hbook__fb_app_id', _t('Facebook App ID', 'hbook') );
+		$ui->append('text', 'fb_app_secret', 'option:hbook__fb_app_secret', _t('Facebook App Secret', 'hbook') );
+		$ui->append('text', 'fb_scopes', 'option:hbook__fb_scopes', _t('Facebook Scopes', 'hbook') );
 
 		$ui->append( 'submit', 'save', _t( 'Save' ) );
 		$ui->out();
