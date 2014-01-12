@@ -19,9 +19,69 @@ class Hbook extends Plugin
 				'cookie' => true,
 			));
 
-			$this->add_rule('"auth"/"login"/"facebook"', 'login_facebook');
+			$this->add_rule('"auth"/"facebook"/"add"', 'add_facebook_user');
 
 			$this->check_user();
+
+			Stack::add( 'admin_header_javascript', URL::get_from_filesystem(__FILE__) . '/admin.js', 'hbook-admin', array('jquery') );
+		}
+	}
+
+	public function action_plugin_act_add_facebook_user()
+	{
+		if (!User::identify()->can( 'manage_users' )) {
+			echo 'Access denied';
+			return;
+		}
+
+		$fbid = Controller::get_var('user');
+
+		// make sure a user like that doesn't already exist
+		$users = Users::get_by_info('facebook_id', $fbid);
+
+		if (isset($users[0])) {
+			$user = $users[0];
+		} else {
+			$info = $this->facebook->api('/' . $fbid);
+
+			if (isset($info['username'])) {
+				$username = $info['username'];
+			} else {
+				$username = $fbid;
+			}
+
+			$email = $fbid . '@facebook.com'; // this should work
+
+			$password = UUID::get();
+
+			$user = new User( array(
+				'username' => $username,
+				'email' => $email,
+				'password' => Utils::crypt($password)
+			));
+
+			if (isset($info['name'])) {
+				$user->info->displayname = $info['name'];
+			}
+
+			$user->info->facebook_id = $fbid;
+
+			$user->info->imageurl = 'http://graph.facebook.com/' . $fbid . '/picture';
+
+			$user->insert();
+		}
+
+		// Assign them to the correct group, if any
+		if (Controller::get_var('group')) {
+			$group = UserGroup::get_by_id( Controller::get_var('group') );
+
+			$group->add( $user );
+
+			Utils::redirect( URL::get( 'admin', 'page=group' ) . '?id=' . $group->id );
+
+		} else {
+			// redirect somewhere
+			Utils::redirect( URL::get( 'admin', 'page=group' ) );
 		}
 	}
 
