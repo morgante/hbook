@@ -5,7 +5,7 @@
 	
 	<author url="http://morgante.net/">Morgante Pell</author>
 	
-	<version>0.1</version>
+	<version>0.2</version>
 	<url>http://lab.morgante.net/hbook</url>
 	<description><![CDATA[Hbook allows users to log in to Habari via Facebook.]]></description>
 
