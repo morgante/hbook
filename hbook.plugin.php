@@ -108,49 +108,45 @@ class Hbook extends Plugin
 			return;
 		}
 
-		$fbid = Controller::get_var('user');
+		$fbid = $_GET['user'];
 
-		$info = $this->facebook->api('/' . $fbid);
-		$fbid = $info['id']; // normalize ID
+		$data = $this->api('/' . $fbid, Options::get('hbook__fb_app_token'));
+		$fbid = $data->id; // normalize ID
 
-		// make sure a user like that doesn't already exist
-		$users = Users::get_by_info('facebook_id', $fbid);
-
-		if (isset($users[0])) {
-			$user = $users[0];
+		// The following is important, because it's part of the "socialauth" feature API
+		$user = array("id" => $data->id);
+		
+		if(isset($data->name)) {
+			$user['name'] = $data->name;
 		} else {
-			if (isset($info['username'])) {
-				$username = $info['username'];
-			} else {
-				$username = $fbid;
-			}
-
-			$email = $fbid . '@facebook.com'; // this should work
-
-			$password = UUID::get();
-
-			$user = new User( array(
-				'username' => $username,
-				'email' => $email,
-				'password' => Utils::crypt($password)
-			));
-
-			if (isset($info['name'])) {
-				$user->info->displayname = $info['name'];
-			}
-
-			$user->info->facebook_id = $fbid;
-
-			$user->info->imageurl = 'http://graph.facebook.com/' . $fbid . '/picture';
-
-			$user->insert();
+			$user['name'] = $data->id;
 		}
 
-		// Assign them to the correct group, if any
-		if (Controller::get_var('group')) {
-			$group = UserGroup::get_by_id( Controller::get_var('group') );
+		$user['portrait_url'] = $this->get_portrait_url($data->id);
 
-			$group->add( $user );
+		if(isset($data->email) && !empty($data->email)) {
+			$user['email'] = $data->email;
+		} else {
+			$user['email'] = $data->id . '@facebook.com';
+		}
+
+		if(isset($data->username)) {
+			$user['username'] = $data->username;
+		} else {
+			$user['username'] = $data->id;
+		}
+
+		// Pass the identification data to plugins
+		Plugins::act('socialauth_identified', $this->service, $user, 'usercreate');
+		
+		// Assign them to the correct group, if any
+		if ($_GET['group']) {
+			$group = UserGroup::get_by_id( $_GET['group'] );
+			$user = Plugins::filter('socialauth_user', $this->service, $fbid);
+
+			if ( $user ) {
+				$group->add( $user );
+			}
 
 			Utils::redirect( URL::get( 'admin', 'page=group' ) . '?id=' . $group->id );
 
@@ -173,7 +169,7 @@ class Hbook extends Plugin
 		$ui->append('text', 'fb_scopes', 'option:hbook__fb_scopes')->label( _t('Facebook Scopes', 'hbook') );
 
 		$ui->append( 'submit', 'save', _t( 'Save' ) );
-		
+
 		$ui->on_success('save_facebook_credentials');
 
 		$ui->out();
