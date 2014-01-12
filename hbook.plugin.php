@@ -36,14 +36,15 @@ class Hbook extends Plugin
 
 		$fbid = Controller::get_var('user');
 
+		$info = $this->facebook->api('/' . $fbid);
+		$fbid = $info['id']; // normalize ID
+
 		// make sure a user like that doesn't already exist
 		$users = Users::get_by_info('facebook_id', $fbid);
 
 		if (isset($users[0])) {
 			$user = $users[0];
 		} else {
-			$info = $this->facebook->api('/' . $fbid);
-
 			if (isset($info['username'])) {
 				$username = $info['username'];
 			} else {
