@@ -1,10 +1,13 @@
 <?php
 
+namespace Habari;
+
 if ( !defined( 'HABARI_PATH' ) ) {
 	die( 'No direct access' );
 }
 
 require_once('facebook-sdk/src/facebook.php');
+use Facebook;
 
 class Hbook extends Plugin
 {
