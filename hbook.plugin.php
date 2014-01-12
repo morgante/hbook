@@ -173,7 +173,39 @@ class Hbook extends Plugin
 		$ui->append('text', 'fb_scopes', 'option:hbook__fb_scopes', _t('Facebook Scopes', 'hbook') );
 
 		$ui->append( 'submit', 'save', _t( 'Save' ) );
+		
+		$ui->on_success('save_facebook_credentials');
+
 		$ui->out();
+	}
+
+	/**
+	 * Handle saving Facebook credentials
+	 * Generate an app auth token
+	 */
+	public function filter_save_facebook_credentials($b, $form)
+	{
+		try {
+			$request = new RemoteRequest($this->build_link( 'app_token', array(
+				'client_id' => $form->fb_app_id->value,
+				'client_secret' => $form->fb_app_secret->value
+			)));
+			$request->execute();
+
+			if ( !$request->executed() ) {
+				Session::error('Facebook could not be reached to authenticate your changes');
+			} else {
+				parse_str($request->get_response_body(), $response);
+
+				Options::set('hbook__fb_app_token', $response['access_token']);
+			}
+
+			// Do the normal saving
+			$form->save();
+			
+		} catch (Exception $e) {
+			Session::error('There was an error authenticating those credentials.');
+		}
 	}
 
 	/**
@@ -200,16 +232,28 @@ class Hbook extends Plugin
     		case 'oauth':
     			$url = "https://www.facebook.com/dialog/oauth?";
     			break;
+    		case 'app_token':
     		case 'token':
     			$url = 'https://graph.facebook.com/oauth/access_token?';
     			break;
     	}
 
-    	$url .= 'client_id=' . Options::get('hbook__fb_app_id');
+    	if ( isset( $params['client_id'] ) ) {
+    		$url .= 'client_id=' . $params['client_id'];
+    	} else {
+    		$url .= 'client_id=' . Options::get('hbook__fb_app_id');
+    	}
 
-    	if ($type == 'token') {
-    		$url .= '&client_secret=' . Options::get('hbook__fb_app_secret');
-    		$url .= '&code=' . $params['code'];
+    	if ($type == 'token' || $type == 'app_token') {
+    		if ( isset( $params['client_secret'] ) ) {
+	    		$url .= '&client_secret=' . $params['client_secret'];
+	    	} else {
+	    		$url .= '&client_secret=' . Options::get('hbook__fb_app_secret');
+	    	}
+
+    		if ( isset( $params['code'] ) ) {
+    			$url .= '&code=' . $params['code'];
+    		}
     	}
 
     	if ($type == 'oauth') {
@@ -229,7 +273,13 @@ class Hbook extends Plugin
 	    	}
     	}
 
-		$url .= "&redirect_uri=" . URL::get('facebook_oauth_callback');
+    	if ( $type == 'oauth' || $type == 'token' ) {
+    		$url .= "&redirect_uri=" . URL::get('facebook_oauth_callback');
+    	}
+		
+		if ( $type == 'app_token' ) {
+			$url .= '&grant_type=client_credentials';
+		}
 
 		if(isset($params['state'])) {
 			$url .= "&state=" . $params['state'];
