@@ -9,5 +9,9 @@
 	<url>http://lab.morgante.net/hbook</url>
 	<description><![CDATA[Hbook allows users to log in to Habari via Facebook.]]></description>
 
+	<requires>
+		<feature url="http://wiki.habariproject.org/en/feature/socialauth">socialauth</feature>
+	</requires>
+
 	<copyright>2013</copyright>
 </pluggable>
