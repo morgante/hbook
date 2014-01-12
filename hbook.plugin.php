@@ -22,9 +22,70 @@ class Hbook extends Plugin
 				'cookie' => true,
 			));
 
-			$this->add_rule('"auth"/"login"/"facebook"', 'login_facebook');
+			$this->add_rule('"auth"/"facebook"/"add"', 'add_facebook_user');
 
 			$this->check_user();
+
+			Stack::add( 'admin_header_javascript', URL::get_from_filesystem(__FILE__) . '/admin.js', 'hbook-admin', array('jquery') );
+		}
+	}
+
+	public function action_plugin_act_add_facebook_user()
+	{
+		if (!User::identify()->can( 'manage_users' )) {
+			echo 'Access denied';
+			return;
+		}
+
+		$fbid = Controller::get_var('user');
+
+		$info = $this->facebook->api('/' . $fbid);
+		$fbid = $info['id']; // normalize ID
+
+		// make sure a user like that doesn't already exist
+		$users = Users::get_by_info('facebook_id', $fbid);
+
+		if (isset($users[0])) {
+			$user = $users[0];
+		} else {
+			if (isset($info['username'])) {
+				$username = $info['username'];
+			} else {
+				$username = $fbid;
+			}
+
+			$email = $fbid . '@facebook.com'; // this should work
+
+			$password = UUID::get();
+
+			$user = new User( array(
+				'username' => $username,
+				'email' => $email,
+				'password' => Utils::crypt($password)
+			));
+
+			if (isset($info['name'])) {
+				$user->info->displayname = $info['name'];
+			}
+
+			$user->info->facebook_id = $fbid;
+
+			$user->info->imageurl = 'http://graph.facebook.com/' . $fbid . '/picture';
+
+			$user->insert();
+		}
+
+		// Assign them to the correct group, if any
+		if (Controller::get_var('group')) {
+			$group = UserGroup::get_by_id( Controller::get_var('group') );
+
+			$group->add( $user );
+
+			Utils::redirect( URL::get( 'admin', 'page=group' ) . '?id=' . $group->id );
+
+		} else {
+			// redirect somewhere
+			Utils::redirect( URL::get( 'admin', 'page=group' ) );
 		}
 	}
 
@@ -66,7 +127,10 @@ class Hbook extends Plugin
 	{
 		Stack::add( 'admin_footer_javascript', URL::get_from_filesystem(__FILE__) . '/facebook.js', 'facebook', array('jquery') );
 
-		echo '<button data-fb-login="'. Options::get('hbook__fb_app_id') . '">Log in with Facebook</button>';
+		$button = '<button class="login facebook" data-fb-login="'. Options::get('hbook__fb_app_id') . '">Log in with Facebook</button>';
+		$button = Plugins::filter('login_button_facebook', $button, Options::get('hbook__fb_app_id'));
+
+		echo $button;
 	}
 
 	/**
